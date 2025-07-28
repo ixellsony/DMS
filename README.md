@@ -1,4 +1,4 @@
-# DMS - Dashboard Monitoring Serveur
+# DMS - Dashboard Monitoring Serveurs
 
 ![Aperçu du Dashboard](demo.png)
 
