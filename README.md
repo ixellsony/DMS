@@ -2,7 +2,7 @@
 
 ![Aperçu du Dashboard](demo.png)
 
-**DMS** (Dashboard Monitoring Serveur) est un outil léger permettant de monitorer facilement l'état de vos serveurs via une interface dashboard.  Il se compose d'une partie **serveur** et d'une partie **client**.
+**DMS** (Dashboard Monitoring Serveurs) est un outil léger permettant de monitorer facilement l'état de vos serveurs via une interface dashboard.  Il se compose d'une partie **serveur** et d'une partie **client**.
 
 ## Fonctionnement
 
