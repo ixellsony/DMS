@@ -17,5 +17,5 @@ ruby srv.rb
 ### Côté client
 
 ```bash
-./install.sh
+./install.sh https://mon-serveur-dms.com/metrics
 ```
