@@ -13,8 +13,9 @@
 
 ```bash
 ruby srv.rb
-
+```
 ### Côté client
 
 ```bash
 ./install.sh
+```
