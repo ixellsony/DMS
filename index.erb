@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Monitoring Serveurs</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .server-card {
+      transition: transform 0.2s;
+    }
+    .server-card:hover {
+      transform: translateY(-5px);
+    }
+    .status-online {
+      color: #28a745;
+    }
+    .status-offline {
+      color: #dc3545;
+    }
+    .metric-icon {
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+    }
+    .temperature-hot {
+      color: #dc3545;
+    }
+    .temperature-warm {
+      color: #ffc107;
+    }
+    .temperature-cool {
+      color: #28a745;
+    }
+    .usage-high {
+      color: #dc3545;
+    }
+    .usage-medium {
+      color: #ffc107;
+    }
+    .usage-low {
+      color: #28a745;
+    }
+    .header-controls {
+      font-size: 0.9rem;
+    }
+    .header-controls .form-check-input {
+      margin-right: 0.5rem;
+    }
+    
+    /* Statistiques compactes */
+    .stats-card {
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .stats-card .metric-icon {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .stats-card .card-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .stats-card .card-text {
+      font-size: 0.875rem;
+      margin-bottom: 0;
+    }
+    
+    /* Mode compact mobile */
+    .stats-compact {
+      display: none;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+    }
+    .stats-compact .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .stats-compact .stat-item:last-child {
+      border-bottom: none;
+    }
+    .stats-compact .stat-value {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container-fluid {
+        padding: 1rem;
+      }
+      .display-4 {
+        font-size: 1.75rem;
+      }
+      .stats-card {
+        padding: 0.5rem;
+      }
+      .stats-card .metric-icon {
+        font-size: 0.9rem;
+      }
+      .stats-card .card-title {
+        font-size: 1.1rem;
+      }
+      .stats-card .card-text {
+        font-size: 0.8rem;
+      }
+      .header-controls {
+        font-size: 0.8rem;
+        margin-top: 1rem;
+      }
+      .header-controls .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+      /* Afficher le mode compact sur mobile */
+      .stats-cards {
+        display: none !important;
+      }
+      .stats-compact {
+        display: block !important;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .stats-row {
+        margin-bottom: 0.5rem;
+      }
+      .stats-card {
+        padding: 0.4rem;
+      }
+      .stats-card .metric-icon {
+        font-size: 0.8rem;
+      }
+      .stats-card .card-title {
+        font-size: 1rem;
+      }
+      .stats-card .card-text {
+        font-size: 0.75rem;
+      }
+      .header-controls {
+        font-size: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .header-controls .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container-fluid py-4">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h1 class="display-4 text-center">
+          <i class="fas fa-server me-3"></i>
+          Dashboard Monitoring Serveurs
+        </h1>
+        <p class="text-center text-muted">
+          Surveillance en temps réel de vos serveurs
+        </p>
+        
+        <!-- Contrôles intégrés dans le header -->
+        <div class="header-controls d-flex justify-content-center align-items-center">
+          <div class="form-check form-switch d-flex align-items-center">
+            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+            <label class="form-check-label" for="autoRefresh">
+              Auto-refresh (30s)
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if @servers.empty? %>
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucun serveur connecté. Lancez le client.rb sur vos serveurs pour commencer le monitoring.
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <!-- Statistiques globales -->
+      <!-- Version cartes (desktop) -->
+      <div class="row stats-row mb-3 stats-cards">
+        <div class="col-6 col-lg-3 mb-2 mb-lg-0">
+          <div class="card border-primary stats-card">
+            <div class="card-body text-center p-2">
+              <i class="fas fa-server text-primary metric-icon"></i>
+              <h4 class="card-title mb-1"><%= @servers.length %></h4>
+              <p class="card-text">Serveurs</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2 mb-lg-0">
+          <div class="card border-success stats-card">
+            <div class="card-body text-center p-2">
+              <i class="fas fa-check-circle text-success metric-icon"></i>
+              <h4 class="card-title mb-1"><%= @servers.count { |s| s['status'] == 'online' } %></h4>
+              <p class="card-text">En ligne</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card border-danger stats-card">
+            <div class="card-body text-center p-2">
+              <i class="fas fa-times-circle text-danger metric-icon"></i>
+              <h4 class="card-title mb-1"><%= @servers.count { |s| s['status'] == 'offline' } %></h4>
+              <p class="card-text">Hors ligne</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card border-warning stats-card">
+            <div class="card-body text-center p-2">
+              <i class="fas fa-exclamation-triangle text-warning metric-icon"></i>
+              <h4 class="card-title mb-1">
+                <%= @servers.count { |s| s['cpu_percentage'] > 80 || s['memory_percentage'] > 80 } %>
+              </h4>
+              <p class="card-text">Alertes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Version compacte (mobile) -->
+      <div class="stats-compact mb-3">
+        <div class="stat-item">
+          <span><i class="fas fa-server text-primary me-2"></i>Serveurs</span>
+          <span class="stat-value text-primary"><%= @servers.length %></span>
+        </div>
+        <div class="stat-item">
+          <span><i class="fas fa-check-circle text-success me-2"></i>En ligne</span>
+          <span class="stat-value text-success"><%= @servers.count { |s| s['status'] == 'online' } %></span>
+        </div>
+        <div class="stat-item">
+          <span><i class="fas fa-times-circle text-danger me-2"></i>Hors ligne</span>
+          <span class="stat-value text-danger"><%= @servers.count { |s| s['status'] == 'offline' } %></span>
+        </div>
+        <div class="stat-item">
+          <span><i class="fas fa-exclamation-triangle text-warning me-2"></i>Alertes</span>
+          <span class="stat-value text-warning"><%= @servers.count { |s| s['cpu_percentage'] > 80 || s['memory_percentage'] > 80 } %></span>
+        </div>
+      </div>
+
+      <!-- Cartes des serveurs -->
+      <div class="row">
+        <% @servers.sort_by { |server| [server['status'] == 'offline' ? 1 : 0, server['server_name']] }.each do |server| %>
+          <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card server-card h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-server me-2"></i>
+                  <%= server['server_name'] %>
+                </h5>
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-<%= server['status'] == 'online' ? 'success' : 'danger' %>">
+                    <i class="fas fa-circle me-1"></i>
+                    <%= server['status'] == 'online' ? 'En ligne' : 'Hors ligne' %>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="card-body">
+                <!-- Température (affichée seulement si différente de 0.0) -->
+                <% if server['temperature'] != 0.0 %>
+                  <div class="row mb-3">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span>
+                          <i class="fas fa-thermometer-half me-2"></i>
+                          Température
+                        </span>
+                        <span class="fw-bold <%= 
+                          server['temperature'] > 70 ? 'temperature-hot' : 
+                          server['temperature'] > 50 ? 'temperature-warm' : 
+                          'temperature-cool' 
+                        %>">
+                          <%= server['temperature'].round(1) %>°C
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+
+                <!-- RAM -->
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span>
+                        <i class="fas fa-memory me-2"></i>
+                        RAM
+                      </span>
+                      <span class="fw-bold">
+                        <%= server['memory_used'].round(0) %>MB / <%= server['memory_total'].round(0) %>MB
+                      </span>
+                    </div>
+                    <div class="progress">
+                      <div class="progress-bar bg-<%= 
+                        server['memory_percentage'] > 80 ? 'danger' : 
+                        server['memory_percentage'] > 60 ? 'warning' : 
+                        'success' 
+                      %>" 
+                           role="progressbar" 
+                           style="width: <%= server['memory_percentage'] %>%"
+                           aria-valuenow="<%= server['memory_percentage'] %>" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100">
+                        <%= server['memory_percentage'].round(1) %>%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stockage -->
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span>
+                        <i class="fas fa-hdd me-2"></i>
+                        Stockage
+                      </span>
+                      <span class="fw-bold">
+                        <%= server['storage_used'] %> / <%= server['storage_total'] %>
+                      </span>
+                    </div>
+                    <div class="progress">
+                      <div class="progress-bar bg-<%= 
+                        server['storage_percentage'] > 80 ? 'danger' : 
+                        server['storage_percentage'] > 60 ? 'warning' : 
+                        'success' 
+                      %>" 
+                           role="progressbar" 
+                           style="width: <%= server['storage_percentage'] %>%"
+                           aria-valuenow="<%= server['storage_percentage'] %>" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100">
+                        <%= server['storage_percentage'] %>%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CPU -->
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span>
+                        <i class="fas fa-microchip me-2"></i>
+                        CPU
+                      </span>
+                      <span class="fw-bold">
+                        <%= server['cpu_percentage'].round(1) %>%
+                      </span>
+                    </div>
+                    <div class="progress">
+                      <div class="progress-bar bg-<%= 
+                        server['cpu_percentage'] > 80 ? 'danger' : 
+                        server['cpu_percentage'] > 60 ? 'warning' : 
+                        'success' 
+                      %>" 
+                           role="progressbar" 
+                           style="width: <%= server['cpu_percentage'] %>%"
+                           aria-valuenow="<%= server['cpu_percentage'] %>" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100">
+                        <%= server['cpu_percentage'].round(1) %>%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-footer text-muted">
+                <small>
+                  <i class="fas fa-clock me-1"></i>
+                  Dernière mise à jour: <%= server['last_seen_human'] %>
+                </small>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Auto-refresh de la page
+    let autoRefreshInterval;
+    const autoRefreshCheckbox = document.getElementById('autoRefresh');
+    
+    function startAutoRefresh() {
+      autoRefreshInterval = setInterval(() => {
+        location.reload();
+      }, 30000); // 30 secondes
+    }
+    
+    function stopAutoRefresh() {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+      }
+    }
+    
+    autoRefreshCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        startAutoRefresh();
+      } else {
+        stopAutoRefresh();
+      }
+    });
+    
+    // Démarre l'auto-refresh par défaut
+    if (autoRefreshCheckbox.checked) {
+      startAutoRefresh();
+    }
+    
+    // Affiche les alertes pour les serveurs en problème
+    <% @servers.each do |server| %>
+      <% if server['status'] == 'offline' %>
+        console.warn('Serveur hors ligne: <%= server['server_name'] %>');
+      <% elsif server['cpu_percentage'] > 90 || server['memory_percentage'] > 90 %>
+        console.warn('Serveur en surcharge: <%= server['server_name'] %> (CPU: <%= server['cpu_percentage'] %>%, RAM: <%= server['memory_percentage'] %>%)');
+      <% end %>
+    <% end %>
+  </script>
+</body>
+</html>
