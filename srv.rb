@@ -406,7 +406,7 @@ class ServerManager < Sinatra::Base
       data['cpu']
     ])
     
-    # NOUVELLE LOGIQUE : Nettoyage intelligent de l'historique
+    # Nettoyage de l'historique
     cleanup_old_metrics(db, data['server_name'])
     
     db.close
